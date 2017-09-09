@@ -1,0 +1,55 @@
+<?xml version="1.0"?>
+<project name="hygrosens rs232 thermometers" default="compile">
+
+	<property file="build.properties"/>
+
+	<target name="clean" description="clean build directory">
+		<delete dir="${classes.dir}" />
+		<delete dir="${build.dir}" />
+	</target>
+
+	<target name="compile" description="compile the Java source code to class files">
+		<mkdir dir="${build.dir}" />
+		<mkdir dir="${classes.dir}" />
+		<javac srcdir="." destdir="${classes.dir}" includeantruntime="false">
+			<classpath>
+				<pathelement location="${native.lib.dir}/RXTXComm.jar" />
+			</classpath>
+		</javac>
+	</target>
+
+	<target name="deploy" depends="compile" description="create a Jar file for the application">
+
+		<unzip src="${native.lib.dir}/RXTXComm.jar" dest="${build.dir}/jars">
+			<patternset>
+				<include name="**/*.class"/>
+			</patternset>
+		</unzip>
+
+		<copy todir="${build.dir}/jars" >
+		  <fileset dir="${native.lib.dir}" />
+		</copy>
+
+		
+		<jar destfile="${build.dir}/hygrotherm.jar">
+
+			<fileset dir="${classes.dir}" includes="**/*.class" />
+			<fileset dir="${build.dir}/jars" includes="**/*.class" />
+			<fileset dir="${build.dir}/jars" includes="**/*Serial*.dll" />
+			<fileset dir="${build.dir}/jars" includes="**/*Serial*.so" />
+			<fileset dir="${build.dir}/jars" includes="**/*Serial*.jnilib" />
+
+			<manifest>
+				<attribute name="Main-Class" value="org.druwido.hygrosens.d1820.HygroMain"/>
+			</manifest>
+		</jar>
+	</target>
+
+	<target name="run" depends="deploy" description="run datalogger">
+		<java fork="true" spawn="false" dir="${build.dir}" jar="${build.dir}/hygrotherm.jar" >
+			<arg value="${serial.port}" />
+			<arg value="${log.file}" />
+		</java>
+	</target>
+
+</project>
